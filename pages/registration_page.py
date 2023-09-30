@@ -1,41 +1,53 @@
 import os
 from selene import browser, have, command
-from tests.conftest import FILE_DIR
+from dataclasses import dataclass
+from data.users import User
+
+FILE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../tests/image'))
 
 
-class RegistrationPage:
-
+@dataclass()
+class RegistrationPage(User):
     def __init__(self):
         self.firstName = browser.element('#firstName')
         self.lastName = browser.element('#lastName')
         self.userEmail = browser.element('#userEmail')
+        self.userGender = browser.all('[name=gender]')
         self.phoneNumber = browser.element('#userNumber')
         self.currentAddress = browser.element('#currentAddress')
-        self.result_table = browser.all('.modal-content td')
+        self.userSubjects = browser.element('#subjectsInput')
+        self.userState = browser.element('#state')
+        self.userCity = browser.element('#city')
+        self.userPicture = browser.element('#uploadPicture')
+        self.submitForm = browser.element('#submit')
+        self.resultTable = browser.all('.modal-content td')
 
     @staticmethod
     def open():
         browser.open('/automation-practice-form')
 
-    @staticmethod
-    def have_title(title):
-        browser.should(have.title(title))
+    def register(self, user):
+        self.firstName.type(user.first_name)
+        self.lastName.type(user.last_name)
+        self.userEmail.type(user.email)
+        self.userGender.element_by(have.value(f'{user.gender}')).element('..').click()
+        self.phoneNumber.type(f'{user.phone}')
+        self.fill_birthday(user.birth_date['day'], user.birth_date['month'], user.birth_date['year'])
+        browser.element(f'//label[contains(text(), "{user.hobbies}")]').click()
 
-    def fill_first_name(self, first_name):
-        self.firstName.type(first_name)
+        for _ in user.subjects:
+            self.userSubjects.type(_).press_enter()
 
-    def fill_last_name(self, last_name):
-        self.lastName.type(last_name)
-
-    def fill_email(self, email):
-        self.userEmail.type(email)
-
-    @staticmethod
-    def fill_gender(gender):
-        browser.all('[name=gender]').element_by(have.value(f'{gender}')).element('..').click()
-
-    def fill_phone_number(self, number):
-        self.phoneNumber.type(f'{number}')
+        self.userPicture.send_keys(os.path.join(FILE_DIR, f'{user.picture}'))
+        self.currentAddress.type(f'{user.current_address}')
+        browser.element('#stateCity-wrapper') \
+            .perform(command.js.scroll_into_view)
+        self.userState.click()
+        browser.element(f'//*[.="{user.state}"]').click()
+        self.userCity.click()
+        browser.element(f'//*[.="{user.city}"]').click()
+        self.userState.click()
+        self.submitForm.click().press_enter()
 
     @staticmethod
     def fill_birthday(day, month, year):
@@ -47,37 +59,18 @@ class RegistrationPage:
         ).click()
 
     @staticmethod
-    def fill_subjects(subjects):
-        browser.element('#subjectsInput').type('Co')
-        browser.element(f'//*[.="{subjects}"]').click()
-
-    @staticmethod
-    def fill_hobbies(hobbies):
-        browser.element(f'//label[contains(text(), "{hobbies}")]').click()
-
-    @staticmethod
-    def upload_file(file_name):
-        browser.element('#uploadPicture').send_keys(os.path.join(FILE_DIR, 'image_1.jpg'))
-
-    def fill_current_address(self, address):
-        self.currentAddress.type(f'{address}')
-
-    @staticmethod
-    def fill_state_and_city(state, city):
-        browser.element('#stateCity-wrapper') \
-            .perform(command.js.scroll_into_view)
-        browser.element('#state').click()
-        browser.element(f'//*[.="{state}"]').click()
-        browser.element('#city').click()
-        browser.element(f'//*[.="{city}"]').click()
-        browser.element('#state').click()
-
-    @staticmethod
-    def submit_form():
-        browser.element('#submit').click().press_enter()
-
-    def should_have_registered(self, *args):
-        self.result_table.should(have.exact_texts(*args))
+    def should_have_registered(user):
+        browser.all('.modal-content td').should(have.exact_texts(
+            ('Student Name', f'{user.first_name} {user.last_name}'),
+            ('Student Email', user.email),
+            ('Gender', user.gender),
+            ('Mobile', user.phone),
+            ('Date of Birth', f'{user.birth_date["day"]} {user.birth_date["month"]},{user.birth_date["year"]}'),
+            ('Subjects', ', '.join(user.subjects)),
+            ('Hobbies', user.hobbies),
+            ('Picture', user.picture),
+            ('Address', user.current_address),
+            ('State and City', f'{user.state} {user.city}')))
 
     @staticmethod
     def close_submit_form():

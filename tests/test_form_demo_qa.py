@@ -1,37 +1,27 @@
 from pages.registration_page import RegistrationPage
 
 
+from pages.registration_page import RegistrationPage, User
+
+
 def test_filling_form():
+    demo_user = User(first_name='Aleksandr',
+                     last_name='Shevchenko',
+                     email='a.shevchenko666@mail.com',
+                     gender='Male',
+                     phone='8005553535',
+                     hobbies='Music',
+                     subjects=['Computer Science'],
+                     current_address='SPB Russia',
+                     picture='image_1.jpg',
+                     birth_date={'day': '24', 'month': 'December', 'year': '1995'},
+                     state='Haryana',
+                     city='Karnal'
+                     )
+
     registration_page = RegistrationPage()
 
     registration_page.open()
-
-    registration_page.have_title('DEMOQA')
-
-    registration_page.fill_first_name('Aleksandr')
-    registration_page.fill_last_name('Shevchenko')
-    registration_page.fill_email('a.shevchenko666@mail.com')
-    registration_page.fill_gender('Male')
-    registration_page.fill_phone_number('8005553535')
-    registration_page.fill_birthday('24', 'December', '1995')
-    registration_page.fill_subjects('Computer Science')
-    registration_page.fill_hobbies('Music')
-    registration_page.upload_file('image_1.jpg')
-    registration_page.fill_current_address('SPB Russia')
-    registration_page.fill_state_and_city('Haryana', 'Karnal')
-
-    registration_page.submit_form()
-
-    registration_page.should_have_registered(
-        ('Student Name', 'Aleksandr Shevchenko'),
-        ('Student Email', 'a.shevchenko666@mail.com'),
-        ('Gender', 'Male'),
-        ('Mobile', '8005553535'),
-        ('Date of Birth', '24 December,1995'),
-        ('Subjects', 'Computer Science'),
-        ('Hobbies', 'Music'),
-        ('Picture', 'image_1.jpg'),
-        ('Address', 'SPB Russia'),
-        ('State and City', 'Haryana Karnal')
-    )
+    registration_page.register(demo_user)
+    registration_page.should_have_registered(demo_user)
     registration_page.close_submit_form()
