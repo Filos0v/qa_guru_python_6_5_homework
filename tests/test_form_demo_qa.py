@@ -1,6 +1,3 @@
-from pages.registration_page import RegistrationPage
-
-
 from pages.registration_page import RegistrationPage, User
 
 
